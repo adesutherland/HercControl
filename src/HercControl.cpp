@@ -27,7 +27,7 @@ auto startHistorySize = 10;    // get 10 lines to start with, then double etc.
 auto timeOut = 30;             // Give up waiting to the Waitfor string after XXs if the console has not been updated
 auto sleepWait = 250;          // Wait 250 ms before getting console updates
 auto maxConsoleSize = 20;      // When the console gets bigger than this, re-mark it
-auto debug = false;
+auto debug = true;
 
 // Global Variables
 auto currentHistorySize = startHistorySize;
@@ -36,6 +36,12 @@ vector<string> saveConsole;
 int main(int argc, char **argv)
 {
    vector<string> console;
+
+   if (debug)
+   {
+       cerr << "Arg 1 (" << argv[1] << ")" << endl;
+       cerr << "Arg 2 (" << argv[2] << ")" << endl;
+   }
 
    try
    {
@@ -56,7 +62,7 @@ int main(int argc, char **argv)
 int secondsSince(chrono::steady_clock::time_point start)
 {
    auto end = chrono::steady_clock::now();
-   return chrono::duration_cast<chrono::seconds>(end - start).count();
+   return (int)chrono::duration_cast<chrono::seconds>(end - start).count();
 }
 
 void callHerculesConsole(string command, string waitFor, vector<string> &console)
@@ -147,7 +153,7 @@ void callHerculesConsole(string command, string waitFor, vector<string> &console
                }
             }
             if (!hasRemarked)
-               runtime_error("Failed to Remark output");
+               throw runtime_error("Failed to Remark output");
          }
 
          // Now we can wait and refresh
@@ -170,7 +176,7 @@ void getResponseFromMarker(string command, string marker, vector<string> &consol
    callHerculesConsole(command, currentHistorySize, console);
 
    auto consoleSize = console.size();
-   static auto lastConsoleSize = -1;
+   static size_t lastConsoleSize = -1;
 
    if (lastConsoleSize != -1)
    {
@@ -227,12 +233,16 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 
    if (debug)
       cerr << "Command: " << cmd << endl;
-
+#ifdef _WIN32
+   unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
+#else
    unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+#endif 
+   
    if (!pipe)
       throw runtime_error("Cannot spawn curl");
 
-   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+   while (fgets(buffer.data(), (int)buffer.size(), pipe.get()) != nullptr)
    {
       string line(buffer.data());
       line = trim(line);
@@ -276,7 +286,8 @@ string makeMarker()
    auto timer = system_clock::to_time_t(now);
 
    // convert to broken time
-   std::tm bt = *std::localtime(&timer);
+   tm bt;
+   localtime_s(&bt , &timer);
 
    std::ostringstream oss;
    oss << "* ";
@@ -290,10 +301,10 @@ string makeMarker()
 string trim(string str)
 {
    // Hercules sends bell \a - so lets get rid of everything weird
-   auto first = str.find_first_not_of(" \n\r\t\a\b\e\f\v"s);
+   auto first = str.find_first_not_of(" \n\r\t\a\b\f\v"s);
    if (string::npos == first)
       return str;
 
-   auto last = str.find_last_not_of(" \n\r\t\a\b\e\f\v"s);
+   auto last = str.find_last_not_of(" \n\r\t\a\b\f\v"s);
    return str.substr(first, (last - first + 1));
 }
