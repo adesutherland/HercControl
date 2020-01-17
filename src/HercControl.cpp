@@ -12,6 +12,8 @@
 #include <thread>
 #include <regex>
 
+#include <cpr/cpr.h>
+
 using namespace std;
 
 void callHerculesConsole(string command, string waitFor, vector<string> &console);
@@ -20,6 +22,7 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 void getResponseFromMarker(string command, string marker, vector<string> &console);
 string makeMarker();
 string trim(string str);
+bool foundEnd(string needle, string hayStack);
 
 // Global Configuration
 auto host = "127.0.0.1:8038"s; // where is the herculese web console
@@ -27,7 +30,7 @@ auto startHistorySize = 10;    // get 10 lines to start with, then double etc.
 auto timeOut = 30;             // Give up waiting to the Waitfor string after XXs if the console has not been updated
 auto sleepWait = 250;          // Wait 250 ms before getting console updates
 auto maxConsoleSize = 20;      // When the console gets bigger than this, re-mark it
-auto debug = true;
+auto debug = false;
 
 // Global Variables
 auto currentHistorySize = startHistorySize;
@@ -39,8 +42,8 @@ int main(int argc, char **argv)
 
    if (debug)
    {
-       cerr << "Arg 1 (" << argv[1] << ")" << endl;
-       cerr << "Arg 2 (" << argv[2] << ")" << endl;
+      cerr << "Arg 1 (" << argv[1] << ")" << endl;
+      cerr << "Arg 2 (" << argv[2] << ")" << endl;
    }
 
    try
@@ -70,9 +73,6 @@ void callHerculesConsole(string command, string waitFor, vector<string> &console
    // Mark the console log so we can find the begining of our commands output
    auto marker = makeMarker();
    auto newMarker = ""s;
-
-   callHerculesConsole(marker, 1, console);
-
    auto begin = chrono::steady_clock::now();
 
    if (waitFor.length() == 0)
@@ -82,6 +82,8 @@ void callHerculesConsole(string command, string waitFor, vector<string> &console
    }
    else
    {
+      callHerculesConsole(marker, 1, console);
+
       getResponseFromMarker(command, marker, console);
 
       while (secondsSince(begin) < timeOut)
@@ -91,10 +93,7 @@ void callHerculesConsole(string command, string waitFor, vector<string> &console
          // Find the string ...
          for (auto i = console.begin(); i != console.end(); i++)
          {
-            std::smatch match;
-            std::regex regexSearch(waitFor);
-            if (regex_search(*i, match, regexSearch))
-            //  if ((*i).rfind(waitFor, 0) == 0)
+            if (foundEnd(*i, waitFor))
             {
                for (i++; i != console.end(); console.erase(i))
                   ; // erase the rest of the output
@@ -122,7 +121,7 @@ void callHerculesConsole(string command, string waitFor, vector<string> &console
             // Find the new marker
             for (auto i = console.begin(); i != console.end(); i++)
             {
-               if ((*i).rfind(waitFor, 0) == 0)
+               if (foundEnd(*i, waitFor))
                {
                   // Wow we found what we were waiting for in the meantime!
                   // erase the rest of the output
@@ -221,30 +220,28 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 
    console.clear();
 
-   auto cmd = R"(curl -s -G "http://)"s;
+   auto cmd = R"(http://)"s;
    cmd.append(host);
-   cmd.append(R"(/cgi-bin/tasks/syslog")"s);
-   cmd.append(R"( --data-urlencode "command=)"s);
-   cmd.append(command);
-   cmd.append(R"(")"s);
-   cmd.append(R"( --data-urlencode "msgcount=)"s);
-   cmd.append(to_string(requested_console_size));
-   cmd.append(R"(" 2>&1)"s);
-
+   cmd.append(R"(/cgi-bin/tasks/syslog)"s);
    if (debug)
       cerr << "Command: " << cmd << endl;
-#ifdef _WIN32
-   unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
-#else
-   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-#endif 
-   
-   if (!pipe)
-      throw runtime_error("Cannot spawn curl");
 
-   while (fgets(buffer.data(), (int)buffer.size(), pipe.get()) != nullptr)
+   auto http_call = cpr::Get(cpr::Url{cmd}, cpr::Parameters{{"command", command}, {"msgcount", to_string(requested_console_size)}});
+   if (http_call.status_code < 200 || http_call.status_code > 299)
    {
-      string line(buffer.data());
+      throw runtime_error("HTTP response code "s + to_string(http_call.status_code));
+   }
+
+   if (http_call.text.length() == 0)
+   {
+      throw runtime_error("No response body");
+   }
+
+   stringstream response(http_call.text);
+   string line;
+
+   while (getline(response, line, '\n'))
+   {
       line = trim(line);
 
       // Need to check that the first line is <html>
@@ -285,14 +282,14 @@ string makeMarker()
    // convert to std::time_t in order to convert to std::tm (broken time)
    auto timer = system_clock::to_time_t(now);
 
-   // convert to broken time
-   #ifdef _WIN32
+// convert to broken time
+#ifdef _WIN32
    tm bt;
-   localtime_s(&bt , &timer);
-   #else
+   localtime_s(&bt, &timer);
+#else
    std::tm bt = *std::localtime(&timer);
-   #endif
-   
+#endif
+
    std::ostringstream oss;
    oss << "* ";
    oss << std::put_time(&bt, "%Y-%m-%d %H:%M:%S"); // HH:MM:SS
@@ -311,4 +308,13 @@ string trim(string str)
 
    auto last = str.find_last_not_of(" \n\r\t\a\b\f\v"s);
    return str.substr(first, (last - first + 1));
+}
+
+bool foundEnd(string needle, string hayStack)
+{
+   std::smatch match;
+   std::regex regexSearch(hayStack);
+   if (regex_search(needle, match, regexSearch))
+      return true;
+   return false;
 }
