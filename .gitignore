@@ -43,5 +43,9 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+# Other
 /.vs
 /out/build/x64-Debug
+/.vscode
+build/

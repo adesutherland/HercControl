@@ -4,6 +4,8 @@ project(HercControl VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
+add_subdirectory(cpr)
+
 add_executable(HercControl src/HercControl.cpp)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

@@ -286,9 +286,13 @@ string makeMarker()
    auto timer = system_clock::to_time_t(now);
 
    // convert to broken time
+   #ifdef _WIN32
    tm bt;
    localtime_s(&bt , &timer);
-
+   #else
+   std::tm bt = *std::localtime(&timer);
+   #endif
+   
    std::ostringstream oss;
    oss << "* ";
    oss << std::put_time(&bt, "%Y-%m-%d %H:%M:%S"); // HH:MM:SS
