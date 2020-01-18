@@ -213,7 +213,6 @@ void getResponseFromMarker(string command, string marker, vector<string> &consol
 
 void callHerculesConsole(string command, int requested_console_size, vector<string> &console)
 {
-   array<char, 128> buffer;
    string result;
    auto keep = false;
    auto needToCheckFirstLine = true;
