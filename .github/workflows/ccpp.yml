@@ -9,7 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        #os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
@@ -31,7 +32,7 @@ jobs:
     
     - run: cd $(Build.ArtifactStagingDirectory)
 
-    - run: zip HercControl.zip HercControl*
+    - run: zip -r HercControl.zip .
 
     - uses: actions/upload-artifact@v1
       with:
