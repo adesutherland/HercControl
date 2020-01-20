@@ -30,11 +30,11 @@ jobs:
         # Select the build configuration, typically Debug or Release.
         cmakeBuildType: Debug # optional, default is Debug
     
-    - run: cd $(Build.ArtifactStagingDirectory)
+    - run: cd "$(Build.ArtifactStagingDirectory)"
 
     - run: zip -r HercControl.zip .
 
     - uses: actions/upload-artifact@v1
       with:
         name: HercControl.zip
-        path: $(Build.ArtifactStagingDirectory)
+        path: "$(Build.ArtifactStagingDirectory)"
