@@ -34,8 +34,8 @@ jobs:
     - name: Get Executable
       run: |
         mkdir -p "${{ runner.temp }}/exe"
-        cp "${{ runner.temp }}/build/HercControl" "${{ runner.temp }}/exe"
-        cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe"
+        cp "${{ runner.temp }}/build/HercControl" "${{ runner.temp }}/exe" || true
+        cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe" || true
         ls "${{ runner.temp }}/exe"
       shell: bash
     - name: Upload Executable
