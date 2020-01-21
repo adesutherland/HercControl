@@ -40,6 +40,11 @@ int main(int argc, char **argv)
 {
    vector<string> console;
 
+   if (argc != 3) {
+       cerr << "HercControl send-string wait-for-string" << endl;
+       return -1;
+   }
+
    if (debug)
    {
       cerr << "Arg 1 (" << argv[1] << ")" << endl;

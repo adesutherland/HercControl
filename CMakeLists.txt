@@ -4,14 +4,19 @@ project(HercControl VERSION 0.1.0)
 #include(CTest)
 #enable_testing()
 
+SET(BUILD_SHARED_LIBS OFF)
+SET(CMAKE_EXE_LINKER_FLAGS "-static")
+add_definitions("-DCURL_STATICLIB")
+
 if(WIN32)
-    add_definitions("-DCURL_STATICLIB")
+#    add_definitions("-DCURL_STATICLIB")
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 endif()
-set(CURL_CA_PATH "none" CACHE STRING
-    "Location of default CA path. Set 'none' to disable or 'auto' for auto-detection. Defaults to 'auto'.")
+#set(CURL_CA_PATH "none" CACHE STRING
+#    "Location of default CA path. Set 'none' to disable or 'auto' for auto-detection. Defaults to 'auto'.")
 option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
 option(BUILD_CPR_TESTS "Set to ON to build cpr tests." OFF)
-option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF)
+# option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" ON)
 option(HTTP_ONLY "disables all protocols except HTTP (This overrides all CURL_DISABLE_* options)" ON)
 add_subdirectory(cpr)
 
