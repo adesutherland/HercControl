@@ -38,8 +38,32 @@ jobs:
         cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe" || true
         ls "${{ runner.temp }}/exe"
       shell: bash
+
+    - name: Make Sanity Check
+      # Makes a invalid call (no args) and expects RC=2
+      working-directory: ${{ runner.temp }}/exe
+      run: | 
+        echo '#!/bin/bash'                    >  sanity.sh
+        echo './HercControl'                  >> sanity.sh
+        echo 'if [ $? -eq 2 ]'                >> sanity.sh
+        echo 'then'                           >> sanity.sh
+        echo '  echo "Sanity Check OK"'       >> sanity.sh
+        echo '  exit 0'                       >> sanity.sh
+        echo 'else'                           >> sanity.sh
+        echo '  echo "Sanity Check Failed"'   >> sanity.sh
+        echo '  exit 1'                       >> sanity.sh
+        echo 'fi'                             >> sanity.sh
+        chmod +x sanity.sh
+      shell: bash
+
     - name: Upload Executable
       uses: actions/upload-artifact@v1
       with:
         name: HercControl-for-${{ matrix.os }}
         path: "${{ runner.temp }}/exe"
+
+    - name: Sanity Check
+      working-directory: ${{ runner.temp }}/exe
+      run: | 
+        bash sanity.sh
+      shell: bash

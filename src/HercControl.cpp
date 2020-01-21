@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
    if (argc != 3) {
        cerr << "HercControl send-string wait-for-string" << endl;
-       return -1;
+       return 2;
    }
 
    if (debug)
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
    catch (runtime_error &ex)
    {
       cerr << "ERROR: " << ex.what() << endl;
-      return -1;
+      return 1;
    }
 
    for (const auto i : console)
