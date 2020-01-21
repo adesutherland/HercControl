@@ -4,11 +4,13 @@ project(HercControl VERSION 0.1.0)
 #include(CTest)
 #enable_testing()
 
-SET(CMAKE_EXE_LINKER_FLAGS "-static")
+# Might as well share libraries on Ubuntu ...
+# SET(CMAKE_EXE_LINKER_FLAGS "-static")
 option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
 add_definitions("-DCURL_STATICLIB")
 if(WIN32)
-    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+   # On windows we will link static to help portability
+   set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 endif()
 
 option(HTTP_ONLY "disables all protocols except HTTP (This overrides all CURL_DISABLE_* options)" ON)
