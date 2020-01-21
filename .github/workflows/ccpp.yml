@@ -29,12 +29,13 @@ jobs:
       with:
         # Select the build configuration, typically Debug or Release.
         cmakeBuildType: Debug # optional, default is Debug
-    
-    - run: |
-        cd "${{Build.ArtifactStagingDirectory}}"
+        buildDirectory: "${{ runner.temp }}/build"
+    - name: ZIP Build
+      run: |
+        cd "${{ runner.temp }}/build"
         zip -r HercControl.zip .
-
-    - uses: actions/upload-artifact@v1
+    - name: Upload Build
+      uses: actions/upload-artifact@v1
       with:
         name: HercControl.zip
-        path: "${{Build.ArtifactStagingDirectory}}"
+        path: "${{ runner.temp }}/build"
