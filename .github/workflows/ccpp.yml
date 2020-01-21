@@ -31,10 +31,10 @@ jobs:
         cmakeBuildType: Debug # optional, default is Debug
     
     - run: |
-        cd "${Build.ArtifactStagingDirectory}"
+        cd "${{Build.ArtifactStagingDirectory}}"
         zip -r HercControl.zip .
 
     - uses: actions/upload-artifact@v1
       with:
         name: HercControl.zip
-        path: "${Build.ArtifactStagingDirectory}"
+        path: "${{Build.ArtifactStagingDirectory}}"
