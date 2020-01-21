@@ -12,8 +12,8 @@ if(WIN32)
     add_definitions("-DCURL_STATICLIB")
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 endif()
-#set(CURL_CA_PATH "none" CACHE STRING
-#    "Location of default CA path. Set 'none' to disable or 'auto' for auto-detection. Defaults to 'auto'.")
+set(CURL_CA_PATH "none" CACHE STRING
+    "Location of default CA path. Set 'none' to disable or 'auto' for auto-detection. Defaults to 'auto'.")
 option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
 option(BUILD_CPR_TESTS "Set to ON to build cpr tests." OFF)
 option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF)
