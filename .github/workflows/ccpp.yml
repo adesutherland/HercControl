@@ -1,10 +1,10 @@
-name: CMake CI
+name: Build HercControl
 
 on: [push]
 
 jobs:
   job:
-    name: ${{ matrix.os }}-hosted-basic
+    name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -17,25 +17,29 @@ jobs:
           - os: ubuntu-latest
             triplet: x64-linux
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout HercControl
+      uses: actions/checkout@v2
     - name: Checkout submodules
       shell: bash
       run: |
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-    - name: run-cmake
+    - name: Run CMAKE
       uses: lukka/run-cmake@v0.5
       with:
         # Select the build configuration, typically Debug or Release.
         cmakeBuildType: Debug # optional, default is Debug
         buildDirectory: "${{ runner.temp }}/build"
-    - name: ZIP Build
+    - name: Get Executable
       run: |
-        cd "${{ runner.temp }}/build"
-        zip -r HercControl.zip .
-    - name: Upload Build
+        mkdir -p "${{ runner.temp }}/exe"
+        cp "${{ runner.temp }}/build/HercControl" "${{ runner.temp }}/exe"
+        cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe"
+        ls "${{ runner.temp }}/exe"
+      shell: bash
+    - name: Upload Executable
       uses: actions/upload-artifact@v1
       with:
-        name: HercControl.zip
-        path: "${{ runner.temp }}/build"
+        name: HercControl-for-${{ matrix.os }}
+        path: "${{ runner.temp }}/exe"
