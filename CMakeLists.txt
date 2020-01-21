@@ -4,12 +4,12 @@ project(HercControl VERSION 0.1.0)
 #include(CTest)
 #enable_testing()
 
-SET(BUILD_SHARED_LIBS OFF)
-SET(CMAKE_EXE_LINKER_FLAGS "-static")
-add_definitions("-DCURL_STATICLIB")
+#SET(BUILD_SHARED_LIBS OFF)
+#SET(CMAKE_EXE_LINKER_FLAGS "-static")
+#add_definitions("-DCURL_STATICLIB")
 
 if(WIN32)
-#    add_definitions("-DCURL_STATICLIB")
+    add_definitions("-DCURL_STATICLIB")
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 endif()
 #set(CURL_CA_PATH "none" CACHE STRING
