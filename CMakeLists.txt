@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(HercControl VERSION 0.1.7)
+project(HercControl VERSION 1.0.0)
 
 #include(CTest)
 #enable_testing()
