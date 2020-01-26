@@ -40,6 +40,8 @@ jobs:
         mkdir -p "${{ runner.temp }}/exe"
         cp "${{ runner.temp }}/build/HercControl" "${{ runner.temp }}/exe" || true
         cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe" || true
+        cp LICENSE "${{ runner.temp }}/exe"
+        cp README.md "${{ runner.temp }}/exe"
         ls "${{ runner.temp }}/exe"
       shell: bash
 
