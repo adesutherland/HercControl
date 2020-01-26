@@ -56,6 +56,7 @@ int main(int argc, char** argv)
 		app.add_flag("-d,--debug", debug, "Debug mode"s);
 		app.add_option("-u,--url", host, "host URL - default is "s + host);
 		app.add_flag("-v,--version", showVersion, "Show version and exit"s);
+		app.allow_windows_style_options(false);
 
 		app.parse(argc, argv);
 
@@ -63,12 +64,6 @@ int main(int argc, char** argv)
 		{
 			cout << rang::fg::cyan << "Version: " << PROJECT_VER << rang::style::reset << std::endl;
 			return 0;
-		}
-
-		if (command == ""s) {
-			cerr << rang::style::bold << rang::fg::red << "No Command Specified" << rang::style::reset << endl;
-			cerr << app.help() << endl;
-			return 2;
 		}
 
 		if (debug)

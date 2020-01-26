@@ -1,26 +1,26 @@
 # Start
 # hercules -f make.conf -d 2>/dev/null 2>/dev/null & 
 
-home="../build"
+home="."
 
-${home}/HercControl "ipl 141" ""
+${home}/HercControl "ipl 141" -w ""
 
-${home}/HercControl "" "USER DSC LOGOFF AS AUTOLOG1"
+${home}/HercControl "" -w "USER DSC LOGOFF AS AUTOLOG1"
 
-${home}/HercControl "/enable all" "COMMAND COMPLETE"
+${home}/HercControl "/enable all" -w "COMMAND COMPLETE"
 
-${home}/HercControl "/cp disc" "^VM/370 Online"
+${home}/HercControl "/cp disc" -w "^VM/370 Online"
 
-${home}/HercControl "/logon cmsuser cmsuser" "^CMS VERSION"
+${home}/HercControl "/logon cmsuser cmsuser" -w "^CMS VERSION"
 
-${home}/HercControl "/" "^Ready"
+${home}/HercControl "/" -w "^Ready"
 
-${home}/HercControl "/listf * * a" "^Ready"
+${home}/HercControl "/listf * * a" -w "^Ready"
 
-${home}/HercControl "/logoff" "^VM/370 Online"
+${home}/HercControl "/logoff" -w "^VM/370 Online"
 
-${home}/HercControl "/logon operator operator" "RECONNECTED AT"
+${home}/HercControl "/logon operator operator" -w "RECONNECTED AT"
 
 # Done
-${home}/HercControl "/shutdown" "^HHCCP011I"
-${home}/HercControl "exit" "" 
+${home}/HercControl "/shutdown" -w "^HHCCP011I"
+# ${home}/HercControl "exit" -w "" 
