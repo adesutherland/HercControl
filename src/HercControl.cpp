@@ -53,25 +53,33 @@ int main(int argc, char** argv)
 	{
 		app.add_option("command", command, "The command to send to Hercules"s);
 		app.add_option("-w,--waitfor", waitFor, "The regex string we are waiting for"s);
-		app.add_flag("-d,--debug", debug, "Debug mode"s);
-		app.add_option("-u,--url", host, "host URL - default is "s + host);
+		app.add_flag("-d,--debug", debug, "Debug mode"s)->envname("HC_DEBUG");
+		app.add_option("-u,--url", host, "Host URL - default is "s + host)->envname("HC_HOSTURL");
 		app.add_flag("-v,--version", showVersion, "Show version and exit"s);
+		app.add_option("-t,--timeout", timeOut, "Timeout/sec - default is "s + to_string(timeOut))->envname("HC_TIMEOUT");
+		app.add_option(",--starthistorysize", startHistorySize, "Start History Size/lines (advanced) - default is "s + to_string(startHistorySize));
+		app.add_option(",--pollingtime", sleepWait, "Polling Time/ms (advanced) - default is "s + to_string(sleepWait));
+		app.add_option(",--maxconsolesize", maxConsoleSize, "Max Console Size/lines (advanced) - default is "s + to_string(maxConsoleSize));
 		app.allow_windows_style_options(false);
 
 		app.parse(argc, argv);
 
-		if (showVersion)
-		{
-			cout << rang::fg::cyan << "Version: " << PROJECT_VER << rang::style::reset << std::endl;
-			return 0;
-		}
-
 		if (debug)
 		{
-			cerr << rang::fg::cyan << "Command " << command << rang::style::reset << endl;
-			cerr << rang::fg::cyan << "Wait for " << waitFor << rang::style::reset << endl;
-			cerr << rang::fg::cyan << "Host " << host << rang::style::reset << endl;
 			cerr << rang::fg::cyan << "Version: " << PROJECT_VER << rang::style::reset << std::endl;
+			cerr << rang::fg::cyan << "Command: " << command << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Wait for: " << waitFor << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Host: " << host << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Timeout/sec: " << timeOut << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Start History Size/lines: " << startHistorySize << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Polling Time/ms: " << sleepWait << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Max Console Size/lines: " << maxConsoleSize << rang::style::reset << endl;
+		}
+
+		if (showVersion)
+		{
+			cout << rang::fg::cyan << PROJECT_VER << rang::style::reset << std::endl;
+			return 0;
 		}
 
 		callHerculesConsole(command, waitFor, console);
@@ -95,7 +103,6 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-
 	for (const auto i : console)
 		cout << rang::fg::green << i << rang::style::reset << endl;
 
@@ -117,7 +124,7 @@ void callHerculesConsole(string command, string waitFor, vector<string>& console
 
 	if (waitFor.length() == 0)
 	{
-		callHerculesConsole(command, 1, console);
+		callHerculesConsole(command, 0, console);
 		return;
 	}
 	else
@@ -256,20 +263,48 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 	string result;
 	auto keep = false;
 	auto needToCheckFirstLine = true;
+	int lines_wanted = requested_console_size?requested_console_size:1;
+	auto begin = chrono::steady_clock::now();
+
+	this_thread::sleep_for(chrono::milliseconds(sleepWait));
+
+
+
+
+
 
 	console.clear();
 
 	auto cmd = R"(http://)"s;
+	cpr::Response http_call;
 	cmd.append(host);
 	cmd.append(R"(/cgi-bin/tasks/syslog)"s);
 	if (debug)
 		cerr << rang::fg::cyan << "Command: " << cmd << rang::style::reset << endl;
+	while (secondsSince(begin) < timeOut) {
 
-	auto http_call = cpr::Get(cpr::Url{ cmd }, cpr::Parameters{ {"command", command}, {"msgcount", to_string(requested_console_size)} });
+		http_call = cpr::Get(cpr::Url{ cmd }, cpr::Parameters{ {"command"s, command}, {"msgcount"s, to_string(lines_wanted)} });
+		if (debug) {
+			cerr << rang::fg::cyan << "Error Code: "s << (int)http_call.error.code << rang::style::reset << endl;
+			cerr << rang::fg::cyan << "Error Message: "s << http_call.error.message << rang::style::reset << endl;
+		}
+		if (http_call.status_code < 200 || http_call.status_code > 299)
+		{
+			if (http_call.error.code == cpr::ErrorCode::CONNECTION_FAILURE) {
+				this_thread::sleep_for(chrono::milliseconds(sleepWait));
+			}
+			else throw runtime_error(http_call.error.message + ". CPR-RC="s + to_string((int)http_call.error.code) + ". HTTP-RC="s + to_string(http_call.status_code));
+		}
+		else break; // Done!
+	}
 	if (http_call.status_code < 200 || http_call.status_code > 299)
 	{
-		throw runtime_error("HTTP response code "s + to_string(http_call.status_code));
+		throw runtime_error(http_call.error.message + ". CPR-RC="s + to_string((int)http_call.error.code) + ". HTTP-RC="s + to_string(http_call.status_code));
 	}
+
+
+	// Ignore any return
+	if (requested_console_size == 0) return;
 
 	if (http_call.text.length() == 0)
 	{
@@ -288,7 +323,7 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 		{
 			if (line != "<html>"s)
 			{
-				throw runtime_error(line);
+				throw runtime_error("Unexpected Data: "s + line);
 			}
 			needToCheckFirstLine = false;
 		}
