@@ -1,5 +1,10 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(HercControl VERSION 1.0.3)
+cmake_minimum_required(VERSION 3.15.0)
+
+# Static runtime
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+project(HercControl VERSION 1.0.4)
 
 #include(CTest)
 #enable_testing()
@@ -15,6 +20,7 @@ endif()
 
 option(HTTP_ONLY "disables all protocols except HTTP (This overrides all CURL_DISABLE_* options)" ON)
 option(CMAKE_USE_LIBSSH2 "Use libSSH2" OFF)
+option(CURL_ZLIB "Set to ON to enable building curl with zlib support." OFF)
 set(CURL_CA_PATH "none" CACHE STRING
     "Location of default CA path. Set 'none' to disable or 'auto' for auto-detection. Defaults to 'auto'.")
 option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF)

@@ -38,7 +38,7 @@
     {
       "name": "Mingw64-Release",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "MinSizeRel",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir\\out\\install\\${name}",
       "cmakeCommandArgs": "",
