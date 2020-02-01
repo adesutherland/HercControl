@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.15.0)
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-project(HercControl VERSION 1.0.4)
+project(HercControl VERSION 1.0.5)
 
 #include(CTest)
 #enable_testing()
@@ -31,11 +31,11 @@ configure_file(src/config.h.in include/config.h)
 
 add_subdirectory(cpr)
  
-add_executable(HercControl src/HercControl.cpp)
-target_link_libraries(HercControl PUBLIC cpr)
-target_include_directories(HercControl PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
-target_include_directories(HercControl PUBLIC rang/include)
-target_include_directories(HercControl PUBLIC CLI11/include)
+add_executable(herccontrol src/HercControl.cpp)
+target_link_libraries(herccontrol PUBLIC cpr)
+target_include_directories(herccontrol PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+target_include_directories(herccontrol PUBLIC rang/include)
+target_include_directories(herccontrol PUBLIC CLI11/include)
 
 #set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 #set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

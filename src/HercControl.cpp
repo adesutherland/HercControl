@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	string waitFor;
 	vector<string> console;
 
-	CLI::App app{ "Tool to send commands to Hercules", "HercControl" };
+	CLI::App app{ "Tool to send commands to Hercules", "herccontrol" };
 	try
 	{
 		app.add_option("command", command, "The command to send to Hercules"s);

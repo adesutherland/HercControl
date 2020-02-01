@@ -3,19 +3,18 @@ name: Build HercControl
 on: [push]
 
 jobs:
-  build:
-    name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        # os: [ubuntu-latest]
-        include:
-          - os: windows-latest
-            triplet: x64-windows
-          - os: ubuntu-latest
-            triplet: x64-linux
+
+#**************************************************#
+  build-ubuntu:
+    name: Build for Ubuntu
+    runs-on: [ubuntu-latest]
+
+    services:
+      vm370:
+        image: adriansutherland/vm370:latest
+        ports:
+          - 8038:8038
+
     steps:
 
     - name: Checkout HercControl
@@ -32,15 +31,13 @@ jobs:
       uses: lukka/run-cmake@v0.5
       with:
         # Select the build configuration, typically Debug or Release.
-#        cmakeBuildType: Release # optional, default is Debug
         cmakeBuildType: MinSizeRel # optional, default is Debug
         buildDirectory: "${{ runner.temp }}/build"
 
     - name: Get Executable
       run: |
         mkdir -p "${{ runner.temp }}/exe"
-        cp "${{ runner.temp }}/build/HercControl" "${{ runner.temp }}/exe" || true
-        cp "${{ runner.temp }}/build/HercControl.exe" "${{ runner.temp }}/exe" || true
+        cp "${{ runner.temp }}/build/herccontrol" "${{ runner.temp }}/exe"
         cp LICENSE "${{ runner.temp }}/exe"
         cp README.md "${{ runner.temp }}/exe"
         ls "${{ runner.temp }}/exe"
@@ -49,45 +46,100 @@ jobs:
     - name: Sanity Check
       working-directory: ${{ runner.temp }}/exe
       run: | 
-        ./HercControl -v
+        ./herccontrol -v
+      shell: bash
+
+    - name: Copy Basic Test
+      run: |
+        cp ./test/basictest.sh "${{ runner.temp }}/basictest.sh"
+        chmod +x "${{ runner.temp }}/basictest.sh"
+      shell: bash
+
+    - name: Basic Test
+      working-directory: ${{ runner.temp }}/exe
+      run: |
+        ../basictest.sh
       shell: bash
 
     - name: Upload Executable
-      # if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-artifact@v1
       with:
-        name: HercControl-for-${{ matrix.os }}
+        name: HercControl-Ubuntu
         path: "${{ runner.temp }}/exe"
 
+#**************************************************#
+  build-windows:
+    name: Build for Windows
+    runs-on: [windows-latest]
+
+    steps:
+
+    - name: Checkout HercControl
+      uses: actions/checkout@v2
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Run CMAKE
+      uses: lukka/run-cmake@v0.5
+      with:
+        # Select the build configuration, typically Debug or Release.
+        cmakeBuildType: MinSizeRel # optional, default is Debug
+        buildDirectory: "${{ runner.temp }}/build"
+
+    - name: Get Executable
+      run: |
+        mkdir -p "${{ runner.temp }}/exe"
+        cp "${{ runner.temp }}/build/herccontrol.exe" "${{ runner.temp }}/exe"
+        cp LICENSE "${{ runner.temp }}/exe"
+        cp README.md "${{ runner.temp }}/exe"
+        ls "${{ runner.temp }}/exe"
+      shell: bash
+
+    - name: Sanity Check
+      working-directory: ${{ runner.temp }}/exe
+      run: | 
+        ./herccontrol -v
+      shell: bash
+
+    - name: Upload Executable
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v1
+      with:
+        name: HercControl-Windows
+        path: "${{ runner.temp }}/exe"
+
+#**************************************************#
   release:
     if: startsWith(github.ref, 'refs/tags/')
     name: Release
-    needs: build
+    needs: [build-ubuntu, build-windows] 
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v1
 
-#      - name: ZIP Source 
-#        run: 
-#          zip -r HercControl-source.zip . -x *.git*
-
       - name: Get ubuntu binary 
         uses: actions/download-artifact@v1
         with:
-          name: HercControl-for-ubuntu-latest
+          name: HercControl-Ubuntu
 
       - name: ZIP ubuntu binary 
         run: 
-          zip -r HercControl-ubuntu.zip HercControl-for-ubuntu-latest
+          zip -r HercControl-Ubuntu.zip HercControl-Ubuntu
 
       - name: Get windows binary 
         uses: actions/download-artifact@v1
         with:
-          name: HercControl-for-windows-latest
+          name: HercControl-Windows
 
       - name: ZIP windows binary 
         run: 
-          zip -r HercControl-windows.zip HercControl-for-windows-latest
+          zip -r HercControl-Windows.zip HercControl-Windows
 
       - name: Create Release
         id: create_release
@@ -100,17 +152,6 @@ jobs:
           draft: true
           prerelease: true
 
-#      - name: Upload Release Asset - Source
-#        id: upload-release-asset-source 
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }} 
-#          asset_path: ./HercControl-source.zip
-#          asset_name: HercControl-source.zip
-#          asset_content_type: application/zip
-
       - name: Upload Release Asset - Ubuntu
         id: upload-release-asset-ubuntu 
         uses: actions/upload-release-asset@v1.0.1
@@ -118,8 +159,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./HercControl-ubuntu.zip
-          asset_name: HercControl-ubuntu-${GITHUB_REF/refs\/tags\//}.zip
+          asset_path: ./HercControl-Ubuntu.zip
+          asset_name: HercControl-Ubuntu.zip
           asset_content_type: application/zip
 
       - name: Upload Release Asset - Windows
@@ -129,6 +170,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./HercControl-windows.zip
-          asset_name: HercControl-windows-${GITHUB_REF/refs\/tags\//}.zip
+          asset_path: ./HercControl-Windows.zip
+          asset_name: HercControl-Windows.zip
           asset_content_type: application/zip

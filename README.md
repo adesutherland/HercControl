@@ -7,7 +7,7 @@ This tool fills this gap. It works by connecting connecting to the HTTP console 
 
 # Instructions
 
-    Usage: HercControl [OPTIONS] [command]
+    Usage: herchontrol [OPTIONS] [command]
 
     Positionals:
       command TEXT                The command to send to Hercules
