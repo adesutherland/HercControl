@@ -18,6 +18,8 @@ This tool fills this gap. It works by connecting connecting to the HTTP console 
       -m,--mark                   Set and output mark point (to be used in herccontrol -f)
       -f,--frommark TEXT          Search log from mark point (returned from herccontrol -m)
       -d,--debug (Env:HC_DEBUG)   Debug mode
+      -q,--quiet                  Quiet mode (no output)
+      -s,--single                 Single mode (only output last line)
       -u,--url TEXT (Env:HC_HOSTURL)
                                   Host URL - default is 127.0.0.1:8038
       -v,--version                Show version and exit
@@ -26,7 +28,3 @@ This tool fills this gap. It works by connecting connecting to the HTTP console 
       --starthistorysize INT      Start History Size/lines (advanced) - default is 10
       --pollingtime INT           Polling Time/ms (advanced) - default is 250
       --maxconsolesize INT        Max Console Size/lines (advanced) - default is 20
-
-
-# TODO
-Use Regex waitfor string to extract the host command return code

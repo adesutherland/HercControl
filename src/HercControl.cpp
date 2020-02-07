@@ -38,18 +38,35 @@ auto maxConsoleSize = 20;      // When the console gets bigger than this, re-mar
 auto debug = false;
 auto getmarker = false;
 auto marker = ""s;
+auto single = false;
+auto quiet = false;
 
 // Global Variables
 auto currentHistorySize = startHistorySize;
 vector<string> saveConsole;
+vector<string> console;
+
+void outputConsole()
+{
+	if (quiet) return;
+	if (single)
+	{
+		if (!console.empty())
+			cout << console.back() << endl;
+		return;
+	}
+	cout << rang::fg::green;
+	for (const auto i : console)
+		cout << i << endl;
+	cout << rang::style::reset;
+}
 
 int main(int argc, char** argv)
 {
 	auto showVersion = false;
 	string command;
 	string waitFor;
-	vector<string> console;
-
+	
 	CLI::App app{ "Tool to send commands to Hercules", "herccontrol" };
 	try
 	{
@@ -58,6 +75,8 @@ int main(int argc, char** argv)
 		app.add_flag("-m,--mark", getmarker, "Set and output mark point (to be used in herccontrol -f)"s);
 		app.add_option("-f,--frommark", marker, "Search log from mark point (returned from herccontrol -m)"s);
 		app.add_flag("-d,--debug", debug, "Debug mode"s)->envname("HC_DEBUG");
+		app.add_flag("-q,--quiet", quiet, "Quiet mode (no output)"s);
+		app.add_flag("-s,--single", single, "Single mode (only output last line)"s);
 		app.add_option("-u,--url", host, "Host URL - default is "s + host)->envname("HC_HOSTURL");
 		app.add_flag("-v,--version", showVersion, "Show version and exit"s);
 		app.add_option("-t,--timeout", timeOut, "Timeout/sec - default is "s + to_string(timeOut))->envname("HC_TIMEOUT");
@@ -114,18 +133,12 @@ int main(int argc, char** argv)
 	}
 	catch (runtime_error & ex)
 	{
-		cout << rang::fg::green;
-		for (const auto i : console)
-			cout << i << endl;
-		cout << rang::style::reset;
+		outputConsole();
 		cerr << rang::style::bold << rang::fg::red << "ERROR: " << ex.what() << rang::style::reset << endl;
 		return 1;
 	}
 
-	cout << rang::fg::green;
-	for (const auto i : console)
-		 cout << i  << endl;
-	cout << rang::style::reset;
+	outputConsole();
 
 	return 0;
 }
