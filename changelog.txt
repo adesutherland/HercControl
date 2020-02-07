@@ -1,0 +1,6 @@
+HercControl Change Log
+======================
+
+Feature f0100 - timeout logging. Show Hercules console output on timeout (helps debugging)
+
+<= 1.0.5 Inital Versions (pre-history)

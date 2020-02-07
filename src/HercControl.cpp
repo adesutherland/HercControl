@@ -99,12 +99,18 @@ int main(int argc, char** argv)
 	}
 	catch (runtime_error & ex)
 	{
+		cout << rang::fg::green;
+		for (const auto i : console)
+			cout << i << endl;
+		cout << rang::style::reset;
 		cerr << rang::style::bold << rang::fg::red << "ERROR: " << ex.what() << rang::style::reset << endl;
 		return 1;
 	}
 
+	cout << rang::fg::green;
 	for (const auto i : console)
-		cout << rang::fg::green << i << rang::style::reset << endl;
+		 cout << i  << endl;
+	cout << rang::style::reset;
 
 	return 0;
 }
