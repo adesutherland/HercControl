@@ -1,6 +1,7 @@
 HercControl Change Log
 ======================
 
-Feature f0100 - timeout logging. Show Hercules console output on timeout (helps debugging)
+Feature f0101 - Set marker. Allows the read from point (marker) to be set so that the console can be read to get external events like mounting a tape
+Feature f0100 - Timeout logging. Show Hercules console output on timeout (helps debugging)
 
 <= 1.0.5 Inital Versions (pre-history)

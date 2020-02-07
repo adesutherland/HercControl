@@ -36,6 +36,8 @@ auto timeOut = 30;             // Give up waiting to the Waitfor string after XX
 auto sleepWait = 250;          // Wait 250 ms before getting console updates
 auto maxConsoleSize = 20;      // When the console gets bigger than this, re-mark it
 auto debug = false;
+auto getmarker = false;
+auto marker = ""s;
 
 // Global Variables
 auto currentHistorySize = startHistorySize;
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
 	{
 		app.add_option("command", command, "The command to send to Hercules"s);
 		app.add_option("-w,--waitfor", waitFor, "The regex string we are waiting for"s);
+		app.add_flag("-m,--mark", getmarker, "Set and output mark point (to be used in herccontrol -f)"s);
+		app.add_option("-f,--frommark", marker, "Search log from mark point (returned from herccontrol -m)"s);
 		app.add_flag("-d,--debug", debug, "Debug mode"s)->envname("HC_DEBUG");
 		app.add_option("-u,--url", host, "Host URL - default is "s + host)->envname("HC_HOSTURL");
 		app.add_flag("-v,--version", showVersion, "Show version and exit"s);
@@ -79,6 +83,17 @@ int main(int argc, char** argv)
 		if (showVersion)
 		{
 			cout << rang::fg::cyan << PROJECT_VER << rang::style::reset << std::endl;
+			return 0;
+		}
+
+		if (getmarker)
+		{
+			if (command != ""s || waitFor != ""s)
+				throw CLI::Error("ARG_ERROR", "-m cannot be used with a command or -w value", 2);
+		
+			marker = makeMarker();
+			callHerculesConsole("* "s + marker, 0, console);
+			cout << marker << std::endl;
 			return 0;
 		}
 
@@ -124,7 +139,6 @@ int secondsSince(chrono::steady_clock::time_point start)
 void callHerculesConsole(string command, string waitFor, vector<string>& console)
 {
 	// Mark the console log so we can find the begining of our commands output
-	auto marker = makeMarker();
 	auto newMarker = ""s;
 	auto begin = chrono::steady_clock::now();
 
@@ -135,7 +149,10 @@ void callHerculesConsole(string command, string waitFor, vector<string>& console
 	}
 	else
 	{
-		callHerculesConsole(marker, 1, console);
+		if (marker == ""s) {
+			marker = makeMarker();
+			callHerculesConsole("* "s + marker, 1, console);
+		}
 
 		getResponseFromMarker(command, marker, console);
 
@@ -166,7 +183,7 @@ void callHerculesConsole(string command, string waitFor, vector<string>& console
 
 				// Put a new mark in the console log
 				newMarker = makeMarker();
-				callHerculesConsole(newMarker, 1, console);
+				callHerculesConsole("* "s + newMarker, 1, console);
 
 				// Get the history since the old marker
 				getResponseFromMarker(""s, marker, console);
@@ -186,7 +203,7 @@ void callHerculesConsole(string command, string waitFor, vector<string>& console
 
 						return;
 					}
-					else if (*i == newMarker)
+					else if (*i == "* "s + newMarker)
 					{
 						// Keep what was logged before
 						// First ... Erase the rest of the output including the marker
@@ -244,7 +261,7 @@ void getResponseFromMarker(string command, string marker, vector<string>& consol
 
 	for (auto i = console.begin(); i != console.end();)
 	{
-		if (*i == marker)
+		if (*i == "* "s + marker)
 		{
 			console.erase(i);
 			lastConsoleSize = -1;
@@ -273,11 +290,6 @@ void callHerculesConsole(string command, int requested_console_size, vector<stri
 	auto begin = chrono::steady_clock::now();
 
 	this_thread::sleep_for(chrono::milliseconds(sleepWait));
-
-
-
-
-
 
 	console.clear();
 
@@ -371,10 +383,9 @@ string makeMarker()
 #endif
 
 	std::ostringstream oss;
-	oss << "* ";
-	oss << std::put_time(&bt, "%Y-%m-%d %H:%M:%S"); // HH:MM:SS
+	oss << std::put_time(&bt, "%Y-%m-%d_%H:%M:%S"); // HH:MM:SS
 	oss << '.' << std::setfill('0') << std::setw(4) << ms.count();
-	oss << " #" << std::setfill('0') << std::setw(8) << counter++;
+	oss << "#" << std::setfill('0') << std::setw(8) << counter++;
 
 	return oss.str();
 }
