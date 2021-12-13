@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15.0)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)  # not necessary, but encouraged
+
 # Static runtime
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
@@ -11,8 +14,10 @@ project(HercControl VERSION 1.1.0) # V1.1
 
 # Might as well share libraries on Ubuntu ...
 # SET(CMAKE_EXE_LINKER_FLAGS "-static")
-option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
-add_definitions("-DCURL_STATICLIB")
+if(!APPLE)
+   option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
+   add_definitions("-DCURL_STATICLIB")
+endif()
 if(WIN32)
    # On windows we will link static to help portability
    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
