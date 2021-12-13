@@ -73,6 +73,12 @@ jobs:
     name: Build for Windows
     runs-on: [windows-latest]
 
+    services:
+      vm370:
+        image: adriansutherland/vm370:latest
+        ports:
+          - 8038:8038
+
     steps:
 
     - name: Checkout HercControl
@@ -105,6 +111,18 @@ jobs:
       working-directory: ${{ runner.temp }}/exe
       run: | 
         ./herccontrol -v
+      shell: bash
+
+    - name: Copy Basic Test
+      run: |
+        cp ./test/basictest.sh "${{ runner.temp }}/basictest.sh"
+        chmod +x "${{ runner.temp }}/basictest.sh"
+      shell: bash
+
+    - name: Basic Test
+      working-directory: ${{ runner.temp }}/exe
+      run: |
+        ../basictest.sh
       shell: bash
 
     - name: Upload Executable
