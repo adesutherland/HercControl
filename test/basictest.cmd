@@ -4,7 +4,7 @@ if %errorlevel% NEQ 0 goto:eof
 if %errorlevel% NEQ 0 goto:eof
 .\herccontrol "/cp disc" -w "^VM/370 Online"
 if %errorlevel% NEQ 0 goto:eof
-.\herccontrol "/logon cmsuser cmsuser" -w "^CMS VERSION"
+.\herccontrol "/logon cmsuser cmsuser" -w "^CMS"
 if %errorlevel% NEQ 0 goto:eof
 .\herccontrol "/" -w "^Ready"
 if %errorlevel% NEQ 0 goto:eof

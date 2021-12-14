@@ -28,7 +28,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Run CMAKE
-      uses: lukka/run-cmake@v0.5
+      uses: lukka/run-cmake@v3
       with:
         # Select the build configuration, typically Debug or Release.
         cmakeBuildType: MinSizeRel # optional, default is Debug
@@ -86,7 +86,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Run CMAKE
-      uses: lukka/run-cmake@v0.5
+      uses: lukka/run-cmake@v3
       with:
         # Select the build configuration, typically Debug or Release.
         cmakeBuildType: MinSizeRel # optional, default is Debug
@@ -114,11 +114,57 @@ jobs:
         name: HercControl-Windows
         path: "${{ runner.temp }}/exe"
 
-#**************************************************#
+  #**************************************************#
+  build-macos:
+    name: Build for MacOS
+    runs-on: [macos-latest]
+
+    steps:
+
+      - name: Checkout HercControl
+        uses: actions/checkout@v2
+
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+      - name: Run CMAKE
+        uses: lukka/run-cmake@v3
+        with:
+          # Select the build configuration, typically Debug or Release.
+          cmakeBuildType: MinSizeRel # optional, default is Debug
+          buildDirectory: "${{ runner.temp }}/build"
+
+      - name: Get Executable
+        run: |
+          mkdir -p "${{ runner.temp }}/exe"
+          cp "${{ runner.temp }}/build/herccontrol" "${{ runner.temp }}/exe"
+          cp LICENSE "${{ runner.temp }}/exe"
+          cp README.md "${{ runner.temp }}/exe"
+          ls "${{ runner.temp }}/exe"
+        shell: bash
+
+      - name: Sanity Check
+        working-directory: ${{ runner.temp }}/exe
+        run: |
+          ./herccontrol -v
+        shell: bash
+
+      - name: Upload Executable
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v1
+        with:
+          name: HercControl-MacOS
+          path: "${{ runner.temp }}/exe"
+
+  #**************************************************#
   release:
     if: startsWith(github.ref, 'refs/tags/')
     name: Release
-    needs: [build-ubuntu, build-windows] 
+    needs: [build-ubuntu, build-windows, build-macos]
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v1
@@ -141,6 +187,15 @@ jobs:
         run: 
           zip -r HercControl-Windows.zip HercControl-Windows
 
+      - name: Get macos binary
+        uses: actions/download-artifact@v1
+        with:
+          name: HercControl-MacOS
+
+      - name: ZIP macos binary
+        run:
+          zip -r HercControl-MacOS.zip HercControl-MacOS
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.0.0
@@ -161,6 +216,17 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
           asset_path: ./HercControl-Ubuntu.zip
           asset_name: HercControl-Ubuntu.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset - MacOS
+        id: upload-release-asset-macos
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./HercControl-MacOS.zip
+          asset_name: HercControl-MacOS.zip
           asset_content_type: application/zip
 
       - name: Upload Release Asset - Windows

@@ -1,20 +1,19 @@
 cmake_minimum_required(VERSION 3.15.0)
-
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)  # not necessary, but encouraged
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Static runtime
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-project(HercControl VERSION 1.1.0) # V1.1
+project(HercControl VERSION 1.1.1)
 
 #include(CTest)
 #enable_testing()
 
 # Might as well share libraries on Ubuntu ...
 # SET(CMAKE_EXE_LINKER_FLAGS "-static")
-if(!APPLE)
+if(NOT APPLE)
    option(CURL_STATICLIB "Set to ON to build libcurl with static linking." ON)
    add_definitions("-DCURL_STATICLIB")
 endif()
@@ -31,6 +30,7 @@ set(CURL_CA_PATH "none" CACHE STRING
 option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF)
 
 option(BUILD_CPR_TESTS "Set to ON to build cpr tests." OFF)
+option(BUILD_SHARED_LIBS "Build libraries as shared libraries" OFF)
 
 configure_file(src/config.h.in include/config.h)
 
